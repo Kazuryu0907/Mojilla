@@ -1,2 +1,4 @@
 IMGUI/
 fmt/
+*.rc
+*.props
