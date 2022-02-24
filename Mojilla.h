@@ -5,6 +5,21 @@
 #include "bakkesmod/plugin/PluginSettingsWindow.h"
 #include "UTFCheck.hpp"
 #include "version.h"
+
+#define SCOREBOARD_LEFT 537
+#define BLUE_BOTTOM 77
+#define ORANGE_TOP 32
+#define BANNER_DISTANCE 57
+#define IMAGE_WIDTH 150
+#define IMAGE_HEIGHT 100
+#define CENTER_X 960
+#define CENTER_Y 540
+#define SCOREBOARD_HEIGHT 548
+#define SCOREBOARD_WIDTH 1033
+#define IMBALANCE_SHIFT 32
+#define MUTATOR_SIZE 478
+#define SKIP_TICK_SHIFT 67
+
 constexpr auto plugin_version = stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD);
 
 
@@ -46,5 +61,8 @@ class Mojilla: public BakkesMod::Plugin::BakkesModPlugin/*, public BakkesMod::Pl
 	*/
 private:
 	std::vector<std::string> _name;
+	Vector2 canvas_size;
+	float scale = 1.0f;
+	float uiScale = 1.0f;
 };
 

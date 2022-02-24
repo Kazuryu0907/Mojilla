@@ -6,6 +6,7 @@ std::vector<std::string> UTFCheck::get(std::string str){
 			std::stringstream ss;
 			ss << std::hex << int(item);
 			if(ss.str().find("ffffff") != std::string::npos){//UTF-8文字の場合
+				hasUTF = true;
     			std::bitset<8> bset((int(item)));
 			    if(bset.test(7) && bset.test(6)){           //11000000 先頭byteか
 			    if(_count != 0){                            //UTFByteからUTF先頭Byteの時
@@ -61,6 +62,10 @@ std::string UTFCheck::_decodeUTF(){
 			}
 			return(ss.str());
     }
+
+bool UTFCheck::isUTF() {
+	return hasUTF;
+}
 
 std::bitset<16> UTFCheck::_shiftbit(std::bitset<16> pre, int val, int shift) {
 	std::bitset<16> bset(0);

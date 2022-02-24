@@ -71,10 +71,18 @@ void Mojilla::onUnload()
 }
 
 void Mojilla::render(CanvasWrapper canvas) {
-	canvas.SetColor(255, 255, 255, 255);
-	canvas.SetPosition(Vector2{ 0,0 });
+	canvas_size = gameWrapper->GetScreenSize();
+	if (float(canvas_size.X) / float(canvas_size.Y) > 1.5f) scale = 0.507f * canvas_size.Y / SCOREBOARD_HEIGHT;
+	else scale = 0.615f * canvas_size.X / SCOREBOARD_WIDTH;
+	uiScale = gameWrapper->GetUIScale();
+	Vector2F center = Vector2F{ float(canvas_size.X) / 2, float(canvas_size.Y) / 2 };
+	float mutators_center = canvas_size.X - 1005.0f * scale * uiScale;
 	std::filesystem::path dataFolder = gameWrapper->GetDataFolderW();
 	dataFolder = dataFolder / "assets";
+	canvas.SetPosition(Vector2F{center.X - SCOREBOARD_WIDTH/2.0f,center.Y});
+	canvas.DrawTexture(std::make_shared<ImageWrapper>(dataFolder / "png" / "3042.png",true).get(),0.5f);
+	canvas.SetColor(255, 255, 255, 255);
+	canvas.SetPosition(Vector2{ 0,0 });
 	for (int i = 0; i < _name.size(); i++) {
 		cvarManager->log(_name[i]);
 		canvas.SetPosition(Vector2{ i * (52 - 10) + 500,500 });
@@ -84,6 +92,7 @@ void Mojilla::render(CanvasWrapper canvas) {
 }
 
 void Mojilla::openScoreboard(std::string eventName) {
+	//-----Black Magic------------
 	gameWrapper->UnregisterDrawables();
 	gameWrapper->RegisterDrawable(std::bind(&Mojilla::render, this, std::placeholders::_1));
 }
