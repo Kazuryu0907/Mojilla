@@ -2,3 +2,7 @@ IMGUI/
 fmt/
 *.rc
 *.props
+*.ps1
+.gitattributes
+version.h
+resource.h
