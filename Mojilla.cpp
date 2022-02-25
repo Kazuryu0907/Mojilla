@@ -105,6 +105,7 @@ void Mojilla::teamUpdate(std::string) {
 		cvarManager->log("-----------------------");
 	}*/
 }
+
 std::string Mojilla::getKey(PriWrapper pl) {
 	UniqueIDWrapper uidw = pl.GetUniqueIdWrapper();
 	std::string rawName = pl.GetOldName().ToString();
@@ -114,6 +115,7 @@ std::string Mojilla::getKey(PriWrapper pl) {
 	if (isBot)nameKey = rawName;			 // Bot‚Íuid‚È‚¢‚©‚ç
 	return nameKey;
 }
+
 void Mojilla::scoreUpdate() {
 	if (!isFirst)return;
 	ServerWrapper sw = gameWrapper->IsInOnlineGame() ? gameWrapper->GetOnlineGame() : gameWrapper->GetGameEventAsServer();
@@ -126,9 +128,10 @@ void Mojilla::scoreUpdate() {
 		if (pl.IsNull())continue;
 		auto keyName = getKey(pl);
 		int score = pl.GetMatchScore();
+		cvarManager->log(keyName + "->" + std::to_string(score));
 		tempMap[keyName] = score;
 	}
-	for (int i = 0; i < pls.Count(); i++) {	//leaderboardÁ‚·ˆ—‚Ü‚¾
+	for (int i = 0; i < leaderboard.size(); i++) {	
 		auto key = leaderboard[i].uid;
 		leaderboard[i].score = tempMap[key];
 	}
@@ -183,7 +186,7 @@ void Mojilla::removeNonActive() {
 		int index = std::distance(leaderboardPls.begin(),itr);
 		leaderboardPls.erase(leaderboardPls.begin() + index);
 	}
-	cvarManager->log("len->"+std::to_string(leaderboard.size()));
+
 	for (std::string key : leaderboardPls){
 		auto fi = std::find_if(leaderboard.begin(), leaderboard.end(), [key](pri& p) {return(p.uid == key); });
 		if (fi == leaderboard.end())continue;
@@ -191,13 +194,10 @@ void Mojilla::removeNonActive() {
 		leaderboard.erase(leaderboard.begin() + index);
 		cvarManager->log("erase->"+key);
 	}
-	for (pri p : leaderboard) {
-		cvarManager->log(p.uid);
-	}
 }
 void Mojilla::openScoreboard(std::string eventName) {
 	removeNonActive();
-	//scoreUpdate();
+	scoreUpdate();
 	isFirst = false;
 	//-----Black Magic------------
 	gameWrapper->UnregisterDrawables();
