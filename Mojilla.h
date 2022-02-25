@@ -5,6 +5,7 @@
 #include "bakkesmod/plugin/PluginSettingsWindow.h"
 #include "UTFCheck.hpp"
 #include "version.h"
+#include <unordered_map>
 
 #define SCOREBOARD_LEFT 537
 #define BLUE_BOTTOM 77
@@ -34,7 +35,10 @@ class Mojilla: public BakkesMod::Plugin::BakkesModPlugin/*, public BakkesMod::Pl
 	void render(CanvasWrapper canvas);
 	void openScoreboard(std::string eventName);
 	void closeScoreboard(std::string eventName);
-
+	void teamUpdate(std::string eventName);
+	void scoreUpdate();
+	std::string getKey(PriWrapper);
+	void removeNonActive();
 	// Inherited via PluginSettingsWindow
 	/*
 	void RenderSettings() override;
@@ -61,8 +65,19 @@ class Mojilla: public BakkesMod::Plugin::BakkesModPlugin/*, public BakkesMod::Pl
 	*/
 private:
 	std::vector<std::string> _name;
+	std::vector<std::vector<std::string>> nameCodes;
+	std::vector<std::string> nameStrs;
 	Vector2 canvas_size;
+	struct pri {
+		std::string uid;
+		int score;
+		unsigned char team;//isblue
+		bool isUTF;
+	};
+	std::vector<pri> leaderboard;
+	std::unordered_map<std::string, std::vector<std::string>> namesMap;
 	float scale = 1.0f;
 	float uiScale = 1.0f;
+	bool isFirst = true;
 };
 
