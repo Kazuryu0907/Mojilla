@@ -39,6 +39,7 @@ class Mojilla: public BakkesMod::Plugin::BakkesModPlugin/*, public BakkesMod::Pl
 	void scoreUpdate();
 	std::string getKey(PriWrapper);
 	void removeNonActive();
+	void sortLeaderboard();
 	// Inherited via PluginSettingsWindow
 	/*
 	void RenderSettings() override;

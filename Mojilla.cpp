@@ -6,7 +6,7 @@
 #include <map>
 #include <algorithm>
 
-BAKKESMOD_PLUGIN(Mojilla, "write a plugin description here", plugin_version, PLUGINTYPE_FREEPLAY)
+BAKKESMOD_PLUGIN(Mojilla, "ÊñáÂ≠óÂåñ„Åë„ÇíÂõûÈÅø„Åô„ÇãPlugin", plugin_version, PLUGINTYPE_FREEPLAY)
 
 std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 
@@ -17,17 +17,6 @@ void Mojilla::onLoad()
 		if (!gameWrapper->IsInOnlineGame())
 			return;
 		ServerWrapper server = gameWrapper->GetOnlineGame();
-		ArrayWrapper<PriWrapper> pls = server.GetPRIs();
-		for (int i = 0; i < pls.Count(); i++) {
-			PriWrapper priw = pls.Get(i);
-			cvarManager->log(priw.GetOldName().ToString());
-			cvarManager->log(std::to_string(priw.GetOldName().ToString().length()));
-			UTFCheck utf;
-			_name = utf.get(priw.GetOldName().ToString());
-			cvarManager->log(priw.GetUniqueIdWrapper().GetIdString());
-			cvarManager->log(std::to_string(priw.GetPlayerID()));
-			cvarManager->log("--------");
-		}
 
 		gameWrapper->HookEvent("Function TAGame.GFxData_GameEvent_TA.OnOpenScoreboard", std::bind(&Mojilla::openScoreboard, this, std::placeholders::_1));
 		gameWrapper->HookEvent("Function TAGame.GFxData_GameEvent_TA.OnCloseScoreboard", std::bind(&Mojilla::closeScoreboard, this, std::placeholders::_1));
@@ -77,33 +66,22 @@ void Mojilla::teamUpdate(std::string) {
 	ServerWrapper sw = gameWrapper->IsInOnlineGame() ? gameWrapper->GetOnlineGame() : gameWrapper->GetGameEventAsServer();
 	if (sw.IsNull())return;
 	ArrayWrapper<PriWrapper> pls = sw.GetPRIs();
-	std::vector<std::string> currentPlsName;
 	leaderboard.clear();
 	for (int i = 0; i < pls.Count(); i++) {
-
 		PriWrapper pl = pls.Get(i);
 		if (pl.IsNull())continue;
 
 		std::string rawName = pl.GetOldName().ToString();
 		std::string nameKey = getKey(pl);
-
 		UTFCheck utf;
-		currentPlsName.push_back(getKey(pl));
 		pri p = { nameKey,pl.GetMatchScore(),pl.GetTeamNum() == 0,utf.isUTF() };
+
 		leaderboard.push_back(p);
 		if (namesMap.find(nameKey) == namesMap.end()) { //not exist
 			std::vector<std::string> name = utf.get(rawName);
 			namesMap[nameKey] = name;
 		}
 	}
-	/*
-	for (pri p : leaderboard) {
-		cvarManager->log(p.uid);
-		cvarManager->log(std::to_string(p.score));
-		cvarManager->log(std::to_string(p.team));
-		cvarManager->log(p.isUTF ? "UTF" : "not UTF");
-		cvarManager->log("-----------------------");
-	}*/
 }
 
 std::string Mojilla::getKey(PriWrapper pl) {
@@ -111,13 +89,12 @@ std::string Mojilla::getKey(PriWrapper pl) {
 	std::string rawName = pl.GetOldName().ToString();
 	bool isBot = pl.GetbBot();
 	std::string nameKey = uidw.GetIdString();// name for key
-
-	if (isBot)nameKey = rawName;			 // BotÇÕuidÇ»Ç¢Ç©ÇÁ
+	if (isBot)nameKey = rawName;			 // Bot hasn't uid
 	return nameKey;
 }
 
 void Mojilla::scoreUpdate() {
-	if (!isFirst)return;
+	if (!isFirst)return;					// Run once
 	ServerWrapper sw = gameWrapper->IsInOnlineGame() ? gameWrapper->GetOnlineGame() : gameWrapper->GetGameEventAsServer();
 	if (sw.IsNull())return;
 	ArrayWrapper<PriWrapper> pls = sw.GetPRIs();
@@ -158,7 +135,7 @@ void Mojilla::render(CanvasWrapper canvas) {
 		auto key = leaderboard[k].uid;
 		std::vector<std::string> name = namesMap[key];
 		for (int i = 0; i < name.size(); i++) {
-			//cvarManager->log(_name[i]);
+			
 			canvas.SetPosition(Vector2{ i * (52 - 10) + 500,500 + k*100});
 			auto pic = std::make_shared<ImageWrapper>(dataFolder / "png" / (name[i] + ".png"), true);
 			canvas.DrawTexture(pic.get(), 0.5f);
@@ -192,12 +169,17 @@ void Mojilla::removeNonActive() {
 		if (fi == leaderboard.end())continue;
 		int index = std::distance(leaderboard.begin(),fi);
 		leaderboard.erase(leaderboard.begin() + index);
-		cvarManager->log("erase->"+key);
+		//cvarManager->log("erase->"+key);
 	}
+}
+void Mojilla::sortLeaderboard(){
+	std::sort(leaderboard.begin(), leaderboard.end(), [](const pri& a, const pri& b) {return (a.score < b.score); });
+	std::sort(leaderboard.begin(), leaderboard.end(), [](const pri& a, const pri& b) {return (a.team < b.team); });
 }
 void Mojilla::openScoreboard(std::string eventName) {
 	removeNonActive();
 	scoreUpdate();
+	sortLeaderboard();
 	isFirst = false;
 	//-----Black Magic------------
 	gameWrapper->UnregisterDrawables();
