@@ -74,11 +74,14 @@ private:
 		int score;
 		unsigned char team;//isblue
 		bool isUTF;
+		std::string rawName;
 	};
 	std::vector<pri> leaderboard;
+	std::unordered_map<std::string,std::vector<std::shared_ptr<ImageWrapper>>> imgPointers;
 	std::unordered_map<std::string, std::vector<std::string>> namesMap;
 	float scale = 1.0f;
 	float uiScale = 1.0f;
 	bool isFirst = true;
+	int blueteamNum = 0;
 };
 

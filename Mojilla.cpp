@@ -17,11 +17,13 @@ void Mojilla::onLoad()
 		if (!gameWrapper->IsInOnlineGame())
 			return;
 		ServerWrapper server = gameWrapper->GetOnlineGame();
-
+		
 		gameWrapper->HookEvent("Function TAGame.GFxData_GameEvent_TA.OnOpenScoreboard", std::bind(&Mojilla::openScoreboard, this, std::placeholders::_1));
 		gameWrapper->HookEvent("Function TAGame.GFxData_GameEvent_TA.OnCloseScoreboard", std::bind(&Mojilla::closeScoreboard, this, std::placeholders::_1));
-		gameWrapper->HookEvent("Function TAGame.PRI_TA.OnTeamChanged", std::bind(&Mojilla::teamUpdate, this, std::placeholders::_1));
-		gameWrapper->HookEvent("Function TAGame.PRI_TA.GetBotName", [this](std::string eventName) {cvarManager->log("BotName"); });
+		gameWrapper->HookEvent("Function TAGame.PRI_TA.OnTeamChanged", std::bind(&Mojilla::teamUpdate, this, std::placeholders::_1));//std::bind(&Mojilla::teamUpdate, this, std::placeholders::_1)
+		//gameWrapper->HookEvent("Function TAGame.GameEvent_TA.EventPlayerAdded", [this](std::string eventName) {cvarManager->log("Add"); });
+		//gameWrapper->HookEvent("Function GameEvent_Soccar_TA.Active.StartRound", [this](std::string eventName) {cvarManager->log("Start Round"); });
+		//gameWrapper->HookEvent("Function OnlineGameJoinGame_X.JoiningBase.IsJoiningGame", [this](std::string eventName) {cvarManager->log("Join"); });
 		}, "test", PERMISSION_ALL);
 	cvarManager->executeCommand("kazuryu_test");
 	//cvarManager->log("Plugin loaded!");
@@ -67,6 +69,7 @@ void Mojilla::teamUpdate(std::string) {
 	if (sw.IsNull())return;
 	ArrayWrapper<PriWrapper> pls = sw.GetPRIs();
 	leaderboard.clear();
+	blueteamNum = 0;
 	for (int i = 0; i < pls.Count(); i++) {
 		PriWrapper pl = pls.Get(i);
 		if (pl.IsNull())continue;
@@ -74,14 +77,21 @@ void Mojilla::teamUpdate(std::string) {
 		std::string rawName = pl.GetOldName().ToString();
 		std::string nameKey = getKey(pl);
 		UTFCheck utf;
-		pri p = { nameKey,pl.GetMatchScore(),pl.GetTeamNum() == 0,utf.isUTF() };
-
+		pri p = { nameKey,pl.GetMatchScore(),pl.GetTeamNum() == 0,utf.isUTF(),rawName };
+		if (pl.GetTeamNum() == 0)blueteamNum++;
 		leaderboard.push_back(p);
 		if (namesMap.find(nameKey) == namesMap.end()) { //not exist
 			std::vector<std::string> name = utf.get(rawName);
+			std::filesystem::path dataFolder = gameWrapper->GetDataFolderW();
+			dataFolder = dataFolder / "assets";
+			for (std::string str : name) {
+				auto pic = std::make_shared<ImageWrapper>(dataFolder / "png" / (str + ".png"), true);
+				imgPointers[nameKey].push_back(pic);
+			}
 			namesMap[nameKey] = name;
 		}
 	}
+	removeNonActive();
 }
 
 std::string Mojilla::getKey(PriWrapper pl) {
@@ -105,7 +115,7 @@ void Mojilla::scoreUpdate() {
 		if (pl.IsNull())continue;
 		auto keyName = getKey(pl);
 		int score = pl.GetMatchScore();
-		cvarManager->log(keyName + "->" + std::to_string(score));
+		//cvarManager->log(keyName + "->" + std::to_string(score));
 		tempMap[keyName] = score;
 	}
 	for (int i = 0; i < leaderboard.size(); i++) {	
@@ -114,6 +124,7 @@ void Mojilla::scoreUpdate() {
 	}
 }
 void Mojilla::render(CanvasWrapper canvas) {
+	canvas_size = gameWrapper->GetScreenSize();
 	/*
 	canvas_size = gameWrapper->GetScreenSize();
 	if (float(canvas_size.X) / float(canvas_size.Y) > 1.5f) scale = 0.507f * canvas_size.Y / SCOREBOARD_HEIGHT;
@@ -130,15 +141,23 @@ void Mojilla::render(CanvasWrapper canvas) {
 	dataFolder = dataFolder / "assets";
 	canvas.SetColor(255, 255, 255, 255);
 	canvas.SetPosition(Vector2{ 0,0 });
-
+	if(isFirst)cvarManager->log(std::to_string(imgPointers.size()));
 	for (int k = 0; k < leaderboard.size();k++) {
 		auto key = leaderboard[k].uid;
-		std::vector<std::string> name = namesMap[key];
-		for (int i = 0; i < name.size(); i++) {
-			
-			canvas.SetPosition(Vector2{ i * (52 - 10) + 500,500 + k*100});
-			auto pic = std::make_shared<ImageWrapper>(dataFolder / "png" / (name[i] + ".png"), true);
+		auto name = imgPointers[key];
+		int i = 0;
+		int offset = int((blueteamNum+2) * 57. -43)+3;
+		cvarManager->log(std::to_string(offset));
+		for (auto pic:name) {
+			if (blueteamNum - 1 >= i) {//blue
+				//canvas.SetPosition(Vector2{ i * (52 - 10) + 1500,int(canvas_size.Y / 2. - 242 + k * 57.) });
+				canvas.SetPosition(Vector2{ i * (52 - 10) + 1500,int(canvas_size.Y / 2. - int(offset) + k * 57.) });
+				//if(i == 0)cvarManager->log(std::to_string(int(canvas_size.Y / 2. - 242 + k * 57.)));
+				//583or298
+			}
+			if(blueteamNum-1 < k)canvas.SetPosition(Vector2{ i * (52 - 10) + 1500,int(canvas_size.Y / 2. + 22 + (static_cast<unsigned __int64>(k)-blueteamNum) * 57.) });
 			canvas.DrawTexture(pic.get(), 0.5f);
+			i++;
 		}
 	}
 }
@@ -169,12 +188,13 @@ void Mojilla::removeNonActive() {
 		if (fi == leaderboard.end())continue;
 		int index = std::distance(leaderboard.begin(),fi);
 		leaderboard.erase(leaderboard.begin() + index);
-		//cvarManager->log("erase->"+key);
+		imgPointers.erase(key);
+		if(isFirst)cvarManager->log("erase->"+key);
 	}
 }
 void Mojilla::sortLeaderboard(){
-	std::sort(leaderboard.begin(), leaderboard.end(), [](const pri& a, const pri& b) {return (a.score < b.score); });
-	std::sort(leaderboard.begin(), leaderboard.end(), [](const pri& a, const pri& b) {return (a.team < b.team); });
+	std::sort(leaderboard.begin(), leaderboard.end(), [](const pri& a, const pri& b) {return (a.score == b.score ? a.rawName < b.rawName : a.score > b.score); });
+	std::sort(leaderboard.begin(), leaderboard.end(), [](const pri& a, const pri& b) {return (a.team > b.team); });
 }
 void Mojilla::openScoreboard(std::string eventName) {
 	removeNonActive();
@@ -183,7 +203,7 @@ void Mojilla::openScoreboard(std::string eventName) {
 	isFirst = false;
 	//-----Black Magic------------
 	gameWrapper->UnregisterDrawables();
-	//gameWrapper->RegisterDrawable(std::bind(&Mojilla::render, this, std::placeholders::_1));
+	gameWrapper->RegisterDrawable(std::bind(&Mojilla::render, this, std::placeholders::_1));
 }
 
 void Mojilla::closeScoreboard(std::string eventName) {
