@@ -121,7 +121,6 @@ void Mojilla::scoreUpdate() {
 		if (pl.IsNull())continue;
 		auto keyName = getKey(pl);
 		int score = pl.GetMatchScore();
-		//cvarManager->log(keyName + "->" + std::to_string(score));
 		tempMap[keyName] = score;
 	}
 	for (int i = 0; i < leaderboard.size(); i++) {	
@@ -147,7 +146,6 @@ void Mojilla::render(CanvasWrapper canvas) {
 	dataFolder = dataFolder / "assets";
 	canvas.SetColor(255, 255, 255, 255);
 	canvas.SetPosition(Vector2{ 0,0 });
-	if(isFirst)cvarManager->log(std::to_string(imgPointers.size()));
 	for (int k = 0; k < leaderboard.size();k++) {
 		auto key = leaderboard[k].uid;
 		auto name = imgPointers[key];
@@ -155,21 +153,18 @@ void Mojilla::render(CanvasWrapper canvas) {
 		int i = 0;
 		int offset = int((blueteamNum+2) * 57. -43)+3;
 		int UTFoffset = 0;
-		//cvarManager->log(std::to_string(offset));
+		int stackPositionX = 1500;
+		bool preUTF = false;
 		for (auto pic:name) {
 			UTFoffset = !UTFTable[i] ? 10 : 0;//isn't UTF
-			//cvarManager->log(key + ":" + std::to_string(UTFoffset));
-			if (blueteamNum - 1 >= k) {//blue
-				//canvas.SetPosition(Vector2{ i * (52 - 10) + 1500,int(canvas_size.Y / 2. - 242 + k * 57.) });
-				canvas.SetPosition(Vector2{ i * (52 - 10 - UTFoffset) + 1500,int(canvas_size.Y / 2. - int(offset) + k * 57.) });
-				//cvarManager->log(std::to_string(i * (52 - 10 - UTFoffset) + 1500));
+			//blue
 
-				//if(i == 0)cvarManager->log(std::to_string(int(canvas_size.Y / 2. - 242 + k * 57.)));
-				//583or298
-			}
-			if(blueteamNum-1 < k)canvas.SetPosition(Vector2{ i * (52 - 10 - UTFoffset) + 1500,int(canvas_size.Y / 2. + 22 + (static_cast<unsigned __int64>(k)-blueteamNum) * 57.) });
+			if (blueteamNum - 1 >= k)canvas.SetPosition(Vector2{ stackPositionX,int(canvas_size.Y / 2. - int(offset) + k * 57.) });
+			if(blueteamNum-1 < k)canvas.SetPosition(Vector2{ stackPositionX,int(canvas_size.Y / 2. + 22 + (static_cast<unsigned __int64>(k)-blueteamNum) * 57.) });
 			canvas.DrawTexture(pic.get(), 0.5f);
+			stackPositionX += int(52 - 10 - UTFoffset);
 			i++;
+			preUTF = UTFTable[i];
 		}
 	}
 }
