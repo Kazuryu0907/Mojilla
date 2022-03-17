@@ -60,7 +60,7 @@ std::string UTFCheck::_decodeUTF(){
 				bin = _shiftbit(bin, int(_utfs[3]) & 0x3F, 6);//10xx xxxx
 				ss << std::hex << (int)bin.to_ulong();
 			}
-			return(ss.str());
+			return("u\\"+ss.str());
     }
 
 bool UTFCheck::isUTF() {

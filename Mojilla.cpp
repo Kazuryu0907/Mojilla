@@ -85,8 +85,14 @@ void Mojilla::teamUpdate(std::string) {
 			std::filesystem::path dataFolder = gameWrapper->GetDataFolderW();
 			dataFolder = dataFolder / "assets";
 			for (std::string str : name) {
+				bool isUTF = false;
+				if (str.find("u\\") != std::string::npos) {//is exist
+					isUTF = true;
+					str = str.erase(0,2);
+				}
 				auto pic = std::make_shared<ImageWrapper>(dataFolder / "png" / (str + ".png"), true);
-				imgPointers[nameKey].push_back(pic);
+				imgPointers[nameKey].push_back(pic);	
+				nameUTFTable[nameKey].push_back(isUTF);
 			}
 			namesMap[nameKey] = name;
 		}
@@ -145,17 +151,23 @@ void Mojilla::render(CanvasWrapper canvas) {
 	for (int k = 0; k < leaderboard.size();k++) {
 		auto key = leaderboard[k].uid;
 		auto name = imgPointers[key];
+		auto UTFTable = nameUTFTable[key];
 		int i = 0;
 		int offset = int((blueteamNum+2) * 57. -43)+3;
-		cvarManager->log(std::to_string(offset));
+		int UTFoffset = 0;
+		//cvarManager->log(std::to_string(offset));
 		for (auto pic:name) {
-			if (blueteamNum - 1 >= i) {//blue
+			UTFoffset = !UTFTable[i] ? 10 : 0;//isn't UTF
+			//cvarManager->log(key + ":" + std::to_string(UTFoffset));
+			if (blueteamNum - 1 >= k) {//blue
 				//canvas.SetPosition(Vector2{ i * (52 - 10) + 1500,int(canvas_size.Y / 2. - 242 + k * 57.) });
-				canvas.SetPosition(Vector2{ i * (52 - 10) + 1500,int(canvas_size.Y / 2. - int(offset) + k * 57.) });
+				canvas.SetPosition(Vector2{ i * (52 - 10 - UTFoffset) + 1500,int(canvas_size.Y / 2. - int(offset) + k * 57.) });
+				//cvarManager->log(std::to_string(i * (52 - 10 - UTFoffset) + 1500));
+
 				//if(i == 0)cvarManager->log(std::to_string(int(canvas_size.Y / 2. - 242 + k * 57.)));
 				//583or298
 			}
-			if(blueteamNum-1 < k)canvas.SetPosition(Vector2{ i * (52 - 10) + 1500,int(canvas_size.Y / 2. + 22 + (static_cast<unsigned __int64>(k)-blueteamNum) * 57.) });
+			if(blueteamNum-1 < k)canvas.SetPosition(Vector2{ i * (52 - 10 - UTFoffset) + 1500,int(canvas_size.Y / 2. + 22 + (static_cast<unsigned __int64>(k)-blueteamNum) * 57.) });
 			canvas.DrawTexture(pic.get(), 0.5f);
 			i++;
 		}
