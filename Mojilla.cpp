@@ -13,7 +13,7 @@ std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 void Mojilla::onLoad()
 {
 	_globalCvarManager = cvarManager;
-	cvarManager->registerNotifier("kazuryu_test", [this](std::vector < std::string > commands) {
+	cvarManager->registerNotifier("Mojilla", [this](std::vector < std::string > commands) {
 		if (!gameWrapper->IsInOnlineGame())
 			return;
 		ServerWrapper server = gameWrapper->GetOnlineGame();
@@ -25,7 +25,7 @@ void Mojilla::onLoad()
 		//gameWrapper->HookEvent("Function GameEvent_Soccar_TA.Active.StartRound",std::bind(&Mojilla::clear,this));
 		//gameWrapper->HookEvent("Function OnlineGameJoinGame_X.JoiningBase.IsJoiningGame", [this](std::string eventName) {cvarManager->log("Join"); });
 		}, "test", PERMISSION_ALL);
-	cvarManager->executeCommand("kazuryu_test");
+	cvarManager->executeCommand("Mojilla");
 	//cvarManager->log("Plugin loaded!");
 
 	//cvarManager->registerNotifier("my_aweseome_notifier", [&](std::vector<std::string> args) {
@@ -62,6 +62,9 @@ void Mojilla::onLoad()
 
 void Mojilla::onUnload()
 {
+	gameWrapper->UnhookEvent("Function TAGame.GFxData_GameEvent_TA.OnOpenScoreboard");
+	gameWrapper->UnhookEvent("Function TAGame.GFxData_GameEvent_TA.OnCloseScoreboard");
+	gameWrapper->UnhookEvent("Function TAGame.PRI_TA.OnTeamChanged");
 }
 
 void Mojilla::clear() {
@@ -84,8 +87,7 @@ void Mojilla::teamUpdate(std::string) {
 		std::string rawName = pl.GetOldName().ToString();
 		std::string nameKey = getKey(pl);
 		UTFCheck utf;
-		cvarManager->log(std::to_string(pl.GetTeamNum()));
-		if (pl.GetTeamNum() == 255)continue;
+		if (pl.GetTeamNum() == 255)continue;// spectate
 		pri p = { nameKey,pl.GetMatchScore(),pl.GetTeamNum() == 0,utf.isUTF(),rawName };
 		if (pl.GetTeamNum() == 0)blueteamNum++;
 		leaderboard.push_back(p);
