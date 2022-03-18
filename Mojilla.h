@@ -40,6 +40,7 @@ class Mojilla: public BakkesMod::Plugin::BakkesModPlugin/*, public BakkesMod::Pl
 	std::string getKey(PriWrapper);
 	void removeNonActive();
 	void sortLeaderboard();
+	void clear();
 	// Inherited via PluginSettingsWindow
 	/*
 	void RenderSettings() override;
@@ -65,9 +66,6 @@ class Mojilla: public BakkesMod::Plugin::BakkesModPlugin/*, public BakkesMod::Pl
 	
 	*/
 private:
-	std::vector<std::string> _name;
-	std::vector<std::vector<std::string>> nameCodes;
-	std::vector<std::string> nameStrs;
 	Vector2 canvas_size;
 	struct pri {
 		std::string uid;

@@ -22,7 +22,7 @@ void Mojilla::onLoad()
 		gameWrapper->HookEvent("Function TAGame.GFxData_GameEvent_TA.OnCloseScoreboard", std::bind(&Mojilla::closeScoreboard, this, std::placeholders::_1));
 		gameWrapper->HookEvent("Function TAGame.PRI_TA.OnTeamChanged", std::bind(&Mojilla::teamUpdate, this, std::placeholders::_1));//std::bind(&Mojilla::teamUpdate, this, std::placeholders::_1)
 		//gameWrapper->HookEvent("Function TAGame.GameEvent_TA.EventPlayerAdded", [this](std::string eventName) {cvarManager->log("Add"); });
-		//gameWrapper->HookEvent("Function GameEvent_Soccar_TA.Active.StartRound", [this](std::string eventName) {cvarManager->log("Start Round"); });
+		//gameWrapper->HookEvent("Function GameEvent_Soccar_TA.Active.StartRound",std::bind(&Mojilla::clear,this));
 		//gameWrapper->HookEvent("Function OnlineGameJoinGame_X.JoiningBase.IsJoiningGame", [this](std::string eventName) {cvarManager->log("Join"); });
 		}, "test", PERMISSION_ALL);
 	cvarManager->executeCommand("kazuryu_test");
@@ -64,6 +64,13 @@ void Mojilla::onUnload()
 {
 }
 
+void Mojilla::clear() {
+	leaderboard.clear();
+	imgPointers.clear();
+	nameUTFTable.clear();
+	namesMap.clear();
+	cvarManager->log("clear");
+}
 void Mojilla::teamUpdate(std::string) {
 	ServerWrapper sw = gameWrapper->IsInOnlineGame() ? gameWrapper->GetOnlineGame() : gameWrapper->GetGameEventAsServer();
 	if (sw.IsNull())return;
@@ -77,6 +84,8 @@ void Mojilla::teamUpdate(std::string) {
 		std::string rawName = pl.GetOldName().ToString();
 		std::string nameKey = getKey(pl);
 		UTFCheck utf;
+		cvarManager->log(std::to_string(pl.GetTeamNum()));
+		if (pl.GetTeamNum() == 255)continue;
 		pri p = { nameKey,pl.GetMatchScore(),pl.GetTeamNum() == 0,utf.isUTF(),rawName };
 		if (pl.GetTeamNum() == 0)blueteamNum++;
 		leaderboard.push_back(p);
@@ -158,13 +167,16 @@ void Mojilla::render(CanvasWrapper canvas) {
 		for (auto pic:name) {
 			UTFoffset = !UTFTable[i] ? 10 : 0;//isn't UTF
 			//blue
-
-			if (blueteamNum - 1 >= k)canvas.SetPosition(Vector2{ stackPositionX,int(canvas_size.Y / 2. - int(offset) + k * 57.) });
-			if(blueteamNum-1 < k)canvas.SetPosition(Vector2{ stackPositionX,int(canvas_size.Y / 2. + 22 + (static_cast<unsigned __int64>(k)-blueteamNum) * 57.) });
+			if(!preUTF && UTFTable[i])stackPositionX -= 10;
+			if (preUTF && !UTFTable[i])stackPositionX += 5;
+			if (stackPositionX > canvas_size.X)stackPositionX = 0;
+			if (blueteamNum - 1 >= k)canvas.SetPosition(Vector2{ stackPositionX,int(canvas_size.Y / 2. - int(offset) + k * 57.) });//blue
+			if(blueteamNum-1 < k)canvas.SetPosition(Vector2{ stackPositionX,int(canvas_size.Y / 2. + 22 + (static_cast<unsigned __int64>(k)-blueteamNum) * 57.) });//orange
 			canvas.DrawTexture(pic.get(), 0.5f);
 			stackPositionX += int(52 - 10 - UTFoffset);
-			i++;
 			preUTF = UTFTable[i];
+			i++;
+			
 		}
 	}
 }
