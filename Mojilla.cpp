@@ -21,7 +21,7 @@ void Mojilla::onLoad()
 		gameWrapper->HookEvent("Function TAGame.GFxData_GameEvent_TA.OnOpenScoreboard", std::bind(&Mojilla::openScoreboard, this, std::placeholders::_1));
 		gameWrapper->HookEvent("Function TAGame.GFxData_GameEvent_TA.OnCloseScoreboard", std::bind(&Mojilla::closeScoreboard, this, std::placeholders::_1));
 		gameWrapper->HookEvent("Function TAGame.PRI_TA.OnTeamChanged", std::bind(&Mojilla::teamUpdate, this, std::placeholders::_1));//std::bind(&Mojilla::teamUpdate, this, std::placeholders::_1)
-		//gameWrapper->HookEvent("Function TAGame.GameEvent_TA.EventPlayerAdded", [this](std::string eventName) {cvarManager->log("Add"); });
+		gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded", [this](std::string eventName) {cvarManager->log("End"); });
 		//gameWrapper->HookEvent("Function GameEvent_Soccar_TA.Active.StartRound",std::bind(&Mojilla::clear,this));
 		//gameWrapper->HookEvent("Function OnlineGameJoinGame_X.JoiningBase.IsJoiningGame", [this](std::string eventName) {cvarManager->log("Join"); });
 		}, "test", PERMISSION_ALL);

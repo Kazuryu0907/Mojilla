@@ -41,6 +41,7 @@ class Mojilla: public BakkesMod::Plugin::BakkesModPlugin/*, public BakkesMod::Pl
 	void removeNonActive();
 	void sortLeaderboard();
 	void clear();
+	void initScoreboard();
 	// Inherited via PluginSettingsWindow
 	/*
 	void RenderSettings() override;
